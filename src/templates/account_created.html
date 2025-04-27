@@ -1,0 +1,53 @@
+<html>
+    <head></head>
+    <body>
+    <tr>
+        <tr>
+                    <td>
+                        <table bgcolor="#5045E2" width="100%" border="0"
+                               cellspacing="0" cellpadding="0"
+                               style="min-width: 332px; max-width: 600px; border: 1px solid #e0e0e0; border-bottom: 0;
+                               border-top-left-radius: 3px; border-top-right-radius: 3px">
+                            <tbody>
+                            <tr>
+                                <td height="72px" colspan="3"></td>
+                            </tr>
+                            <tr>
+                                <td width="32px"></td>
+                                <td style="font-family: Roboto-Regular, Helvetica, Arial, sans-serif;
+                                font-size: 18px; color: #ffffff; line-height: 1.25">
+                                    Creare Cont <i style="color:red"></i>
+                                </td>
+                                <td width="32px"></td>
+                            </tr>
+                            <tr>
+                                <td height="18px" colspan="3"></td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </td>
+                </tr>
+    </tr>
+        <div>
+            <h4>{{ translate('Buna ziua') }}, {{ name }}!</h4>
+        </div>
+        <br>
+        <div>
+    <p>{{ translate('Primesti acest email deoarece contul tau in cadrul platformei') }}
+    <a href= {{ path }}  style="color: blue; text-decoration: underline;" target="_blank"
+       rel="noopener noreferrer">Vesna Man Power</a> {{translate(' a fost creat cu succes!')}}</p>
+            <p>{{ translate('Pentru a va autentifica, va rugam sa utilizati urmatoarele credentiale') }}: {{link}}</p>
+            <br>
+            <p><b>{{ translate('Email') }}:</b> {{ email }}</p>
+            <p><b>{{ translate('Password') }}:</b> {{ password }}</p>
+            <br>
+            {{translate('Multumim')}}.
+            <br>
+            <br>
+            {{translate('Cu stima,')}}
+            <br>
+            {{translate('Echipa Vesna')}}
+            <br>
+        </div>
+    </body>
+</html>
