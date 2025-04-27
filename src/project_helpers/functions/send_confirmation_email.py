@@ -5,16 +5,14 @@ import logging
 
 from constants import CONFIRM_ACCOUNT_SUBJECT
 from extensions import send_html_email
-from project_helpers.config import platform
 
 
 def send_confirmation_email(target, token: str):
-    from modules.legal_entities.models.legal_entities_model import LegalEntitiesModel
-    from modules.natural_persons.models.natural_persons_model import NaturalPersonsModel
+    from modules.client.models.client_model import ClientModel
 
-    target: LegalEntitiesModel | NaturalPersonsModel
+    target: ClientModel
     try:
-        url = f"{platform.FRONTEND_URL}/login?code={token}&email={target.email}"
+        url = f"http://localhost:3000/login?code={token}&email={target.email}"
         send_html_email(
             template="confirm_account_template.html",
             subject=CONFIRM_ACCOUNT_SUBJECT,

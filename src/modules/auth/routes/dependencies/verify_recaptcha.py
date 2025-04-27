@@ -1,36 +1,27 @@
-# Id: recaptcha_check.py 202307 20/07/2023
-#
-# backend
-# Copyright (c) 2011-2013 IntegraSoft S.R.L. All rights reserved.
-#
-# Author: cicada
-#   Rev: 202307
-#   Date: 20/07/2023
-#
-# License description...
+
 from datetime import datetime
 
 import requests
 from fastapi import Depends
 from sqlalchemy.orm import Session
 from extensions import get_db
-from project_helpers.config import recaptcha
+# from project_helpers.config import recaptcha
 from project_helpers.error import Error
 from project_helpers.exceptions import ErrorException
 from ...models import LoginAttemptModel, LoginBody
 
 
 class VerifyRecaptcha:
-    @staticmethod
-    def _verify_recaptcha_token(token: str):
-        r = requests.post(
-            recaptcha.RECAPTCHA_URL,
-            data={"secret": recaptcha.RECAPTCHA_SECRET_KEY, "response": token},
-        )
-        r = r.json()
-        if r.get("success"):
-            return True
-        return False
+    # @staticmethod
+    # def _verify_recaptcha_token(token: str):
+    #     r = requests.post(
+    #         recaptcha.RECAPTCHA_URL,
+    #         data={"secret": recaptcha.RECAPTCHA_SECRET_KEY, "response": token},
+    #     )
+    #     r = r.json()
+    #     if r.get("success"):
+    #         return True
+    #     return False
 
     def __call__(self, body: LoginBody, db: Session = Depends(get_db)):
 

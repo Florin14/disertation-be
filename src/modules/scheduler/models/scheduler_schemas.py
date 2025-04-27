@@ -1,13 +1,3 @@
-# Id: scheduler_schemas.py 202307 18/07/2023
-#
-# backend
-# Copyright (c) 2011-2013 IntegraSoft S.R.L. All rights reserved.
-#
-# Author: cicada
-#   Rev: 202307
-#   Date: 18/07/2023
-#
-# License description...
 from datetime import datetime, date
 import pytz
 from pydantic import Field, constr, field_validator, ValidationError
