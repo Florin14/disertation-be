@@ -5,8 +5,8 @@ from project_helpers.schemas import BaseSchema
 
 
 class LoginBody(BaseSchema):
-    email: str = "cicada.cws@gmail.com"
-    password: str = "Cicada@2016"
+    email: str = "zimbru.florin.4@gmail.com"
+    password: str = "Castigator1."
     recaptchaToken: Optional[str] = None
 
 

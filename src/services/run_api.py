@@ -1,23 +1,4 @@
-# Id: fast_api.py 202305 10/05/2023
-#
-# backend
-# Copyright (c) 2011-2013 IntegraSoft S.R.L. All rights reserved.
-#
-# Author: cicada
-#   Rev: 202305
-#   Date: 10/05/2023
-#
-# License description...
-
-import os
-import sys
-from argparse import Namespace
-
-from alembic import command
-from alembic.config import Config
-from sqlalchemy import text
-
-from extensions.sqlalchemy import SessionLocal
+from project_helpers import init_logger
 
 try:
     import logging
@@ -26,6 +7,9 @@ try:
     from modules import (
         userRouter,
         listingRouter,
+        locationRouter,
+        priceHistoryRouter,
+        predictionRouter,
     )
     from project_helpers.schemas import ErrorSchema
 
@@ -35,14 +19,7 @@ except Exception as e:
 
 
 def startup():
-    streamHandler = logging.StreamHandler(sys.stdout)
-
-    handlers = [
-        streamHandler
-    ]
-    logging.basicConfig(format='%(asctime)s - [%(levelname)s]: %(message)s (%(pathname)s:%(lineno)d)',
-                        datefmt='%Y-%m-%d %H:%M:%S',
-                        level="INFO", handlers=handlers)
+    init_logger()
     init_db()
 
 
@@ -61,7 +38,6 @@ if __name__ == "__main__":
         api.add_middleware(
             CORSMiddleware,
             allow_origins=[
-                "*",
                 "http://localhost:3000",
             ],
             allow_credentials=True,
@@ -75,6 +51,9 @@ if __name__ == "__main__":
             routers=[
                 userRouter,
                 listingRouter,
+                locationRouter,
+                priceHistoryRouter,
+                predictionRouter,
             ],
             responses={
                 500: {"model": ErrorSchema},

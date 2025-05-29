@@ -12,9 +12,9 @@ from constants import PlatformEnvs
 
 
 class MailConfig(ConnectionConfig):
-    MAIL_USERNAME: str = Field("cicada.cws@gmail.com", env="MAIL_USERNAME")
-    MAIL_PASSWORD: str = Field("Cicada@2016", env="MAIL_PASSWORD")
-    MAIL_FROM: EmailStr = Field("cicada.cws@gmail.com", env="MAIL_FROM")
+    MAIL_USERNAME: str = Field("zimbru.florin.4@gmail.com", env="MAIL_USERNAME")
+    MAIL_PASSWORD: str = Field("Castigator1.", env="MAIL_PASSWORD")
+    MAIL_FROM: EmailStr = Field("zimbru.florin.4@gmail.com", env="MAIL_FROM")
     MAIL_SERVER: str = Field("smtp.gmail.com", env="MAIL_SERVER")
     TEMPLATE_FOLDER: str = "templates"
     MAIL_PORT: int = 587
