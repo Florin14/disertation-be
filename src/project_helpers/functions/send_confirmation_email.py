@@ -1,6 +1,3 @@
-# Created by: cicada
-# Date: Wed 04/09/2025
-# Time: 13:00:33.38
 import logging
 
 from constants import CONFIRM_ACCOUNT_SUBJECT

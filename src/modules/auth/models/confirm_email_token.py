@@ -1,13 +1,3 @@
-# Id: admin_model.py 202305 11/05/2023
-#
-# backend
-# Copyright (c) 2011-2013 IntegraSoft S.R.L. All rights reserved.
-#
-# Author: cicada
-#   Rev: 202305
-#   Date: 11/05/2023
-#
-# License description...
 from datetime import datetime, timedelta
 
 from sqlalchemy import Column, DateTime, String, BigInteger, ForeignKey, TEXT

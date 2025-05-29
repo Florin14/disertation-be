@@ -43,8 +43,8 @@ class ClientsFilter(FilterSchema):
 
 
 class ClientRegister(BaseSchema):
-    email: str = Field(..., min_length=1, max_length=40, example="cicada.cws@gmail.com")
-    name: str = Field(..., min_length=1, max_length=50, example="Gal Attila")
+    email: str = Field(..., min_length=1, max_length=40, example="zimbru.florin.4@gmail.com")
+    name: str = Field(..., min_length=1, max_length=50, example="Zimbru Florin")
     phoneNumber: str = Field(..., min_length=1, max_length=40, example="0742412344")
     password: str = Field(..., min_length=1, max_length=40, example="pass")
     confirmPassword: str = Field(...)

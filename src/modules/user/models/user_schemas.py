@@ -7,8 +7,8 @@ from project_helpers.schemas import BaseSchema, FilterSchema
 
 
 class UserAdd(BaseSchema):
-    email: str = Field(..., max_length=40, example="cicada.cws@gmail.com")
-    name: str = Field(..., max_length=50, example="Gal Attila")
+    email: str = Field(..., max_length=40, example="zimbru.florin.4@gmail.com")
+    name: str = Field(..., max_length=50, example="Zimbru Florin")
     role: PlatformRoles = Field(..., example=PlatformRoles.ADMIN)
     password: str
 
