@@ -1,2 +1,2 @@
-from .listing_schemas import *
-from .listing_model import *
+from .prediction_schemas import *
+from .prediction_model import *
