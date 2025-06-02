@@ -48,3 +48,19 @@ class PredictionResponse(PredictionBase):
     id: int
     predicted_price: float
     created_at: datetime
+
+
+class GridResultResponseTrain1(BaseSchema):
+    best_model: str
+    rf_mae_ppsm: float
+    rf_rmse_ppsm: float
+    gb_mae_ppsm: float
+    gb_rmse_ppsm: float
+
+
+class GridResultResponse(BaseSchema):
+    best_model: str
+    rf_mae_ppsm: float
+    rf_rmse_ppsm: float
+    # gb_mae_ppsm: float
+    # gb_rmse_ppsm: float
