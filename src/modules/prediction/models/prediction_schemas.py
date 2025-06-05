@@ -26,28 +26,48 @@ class PredictionListResponse(BaseSchema):
 
 
 class PredictionBase(BaseSchema):
-    # ───────────────────────────────────────────────────────────────────────────
-    # Definim AICI aceleași coloane din PredictionsModel (excluzând id/predicted_price/created_at)
-    # ───────────────────────────────────────────────────────────────────────────
+    # ─────────────────────────────────────────────────────────────────────────
+    # NUMERIC features
     useful_area: Optional[float] = None
+    built_area: Optional[float] = None
+    useful_area_total: Optional[float] = None
+    land_area: Optional[float] = None
+    yard_area: Optional[float] = None
     num_rooms: Optional[int] = None
     num_bathrooms: Optional[int] = None
+    # We receive number of garages; we’ll convert this to `has_garage` (bool) downstream.
     num_garages: Optional[int] = None
     floor: Optional[int] = None
-    street_frontage: Optional[float] = None
-    built_area: Optional[float] = None
-    # … adaugă aici orice altă coloană numerică de la PredictionsModel …
+    built_year: Optional[int] = None
 
+    # ─────────────────────────────────────────────────────────────────────────
+    # CATEGORICAL features
     classification: Optional[str] = None
     land_classification: Optional[str] = None
+    street_frontage: Optional[float] = None  # This is a numeric feature, but often treated as categorical.
     city: Optional[str] = None
-    # … adaugă aici orice altă coloană text de la PredictionsModel …
+    condominium: Optional[str] = None
+    num_kitchens: Optional[int] = None
+    # We’ll convert this to `has_parking_space` (bool) in prepare_input_for_prediction().
+    num_parking_spaces: Optional[int] = None
+
+    has_terrace: Optional[bool] = None
+    has_balconies: Optional[bool] = None
+    comfort: Optional[str] = None
+    property_type: Optional[str] = None
+    structure: Optional[str] = None
+    address: Optional[str] = None
+    price: Optional[float] = None
+    # We’ll compute `for_sale` (bool) from a threshold on `predicted_price` or input price.
+    # If you want to pass it explicitly, you can:
+    for_sale: Optional[bool] = False
+    has_parking_space: Optional[bool] = False
 
 
 class PredictionResponse(PredictionBase):
-    id: int
+    # id: int
     predicted_price: float
-    created_at: datetime
+    # created_at: datetime
 
 
 class GridResultResponseTrain1(BaseSchema):

@@ -1,3 +1,3 @@
-ACCOUNT_CREATED_SUBJECT = "Cont creat pe Vesna Spalatorie - Detalii acces"
-PASSWORD_RESET = "Resetare parola - Vesna Spalatorie"
-CONFIRM_ACCOUNT_SUBJECT = "Bine ati venit pe Vesna Spalatorie - Confirmare cont"
+ACCOUNT_CREATED_SUBJECT = "Cont creat - Detalii acces"
+PASSWORD_RESET = "Resetare parola"
+CONFIRM_ACCOUNT_SUBJECT = "Bine ati venit - Confirmare cont"

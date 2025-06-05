@@ -15,7 +15,7 @@ from .router import router
 @router.post("/login", response_model=LoginResponse)
 def login(body: LoginBody, auth: AuthJWT = Depends(), db: Session = Depends(get_db)):
     user = db.query(UserModel).filter(UserModel.email == body.email).first()
-    if user and verify_password(user.password, body.password) and len(user.confirmTokens) == 0:
+    if user and verify_password(user.password, body.password):# and len(user.confirmTokens) == 0
         accessToken = auth.create_access_token(user.email, user_claims=user.getClaims())
         refreshToken = auth.create_refresh_token(user.email)
         # Set the JWT cookies in the response

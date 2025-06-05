@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Column, BigInteger, Integer, DateTime, Float, Text, Enum, ForeignKey
+from sqlalchemy import Column, BigInteger, Integer, DateTime, Float, Text, Enum, ForeignKey, Boolean
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 
@@ -16,7 +16,7 @@ class ListingModel(BaseModel):
     # ─────────────────────────────────────────────────────────────
     id = Column(BigInteger, primary_key=True, index=True)
     external_id = Column(Text, unique=True, index=True)     # maps to Excel “ID”
-    location_id = Column(Integer, ForeignKey("locations.id"))  # optional FK; kept for relational mapping
+    # location_id = Column(Integer, ForeignKey("locations.id"))  # optional FK; kept for relational mapping
     inserted_at = Column(DateTime, default=lambda: datetime.now())
 
     # ─────────────────────────────────────────────────────────────
@@ -25,46 +25,44 @@ class ListingModel(BaseModel):
     classification = Column(Text)            # Excel: “Clasificare”
     land_classification = Column(Text)       # Excel: “Clasificare teren”
 
-    useful_area_total = Column(Float)        # Excel: “S. utila totala”
-    useful_area = Column(Float)              # Excel: “S. utila”
+    useful_area_total = Column(Float, default=0)        # Excel: “S. utila totala”
+    useful_area = Column(Float, default=0)              # Excel: “S. utila”
 
-    num_kitchens = Column(Integer)           # Excel: “Nr. bucatarii”
-    num_parking = Column(Integer)            # Excel: “Nr. parcari”
+    num_kitchens = Column(Integer, default=0)           # Excel: “Nr. bucatarii”
+    has_parking_space = Column(Boolean, default=False)            # Excel: “Nr. parcari”
 
-    floor = Column(Integer)                  # Excel: “Etaj”
+    floor = Column(Integer, default=0)                  # Excel: “Etaj”
 
-    yard_area = Column(Float)                # Excel: “S. curte”
-    showcase_area = Column(Float)            # Excel: “S. vitrina”
+    yard_area = Column(Float, default=0)                # Excel: “S. curte”
 
     # Now split into two fields instead of `location_raw`:
     location_raw = Column(Text, nullable=True)
     city = Column(Text, nullable=True)
     address = Column(Text, nullable=True)
+    for_sale = Column(Boolean, default=False)  # Indicates if the listing is for sale or rent
 
-    num_rooms = Column(Integer)              # Excel: “Nr. camere”
+    num_rooms = Column(Integer, default=0)              # Excel: “Nr. camere”
 
-    price = Column(Float)                    # Excel: “Preț”
-    street_frontage = Column(Float)          # Excel: “Front stradal”
+    price = Column(Float, default=0)                    # Excel: “Preț”
 
     url = Column(Text)                       # Excel: “URL”
 
-    num_bathrooms = Column(Integer)          # Excel: “Nr. bai”
-    num_garages = Column(Integer)            # Excel: “Nr. garaje”
+    num_bathrooms = Column(Integer, default=0)          # Excel: “Nr. bai”
+    has_garage = Column(Boolean, default=False)            # Excel: “Nr. garaje”
 
-    built_area = Column(Float)               # Excel: “S. construita”
-    land_area = Column(Float)                # Excel: “S. teren”
+    built_area = Column(Float, default=0)               # Excel: “S. construita”
+    built_year = Column(Integer, nullable=True)               # Excel: “S. construita”
 
-    terrace_area = Column(Float)             # Excel: “S. terase”
-    balcony_area = Column(Float)             # Excel: “S. balcoane”
-
+    land_area = Column(Float, default=0)                # Excel: “S. teren”
+    structure = Column(Text)               # Excel: “Structură” (e.g. brick, concrete)
+    property_type = Column(Text)               # Excel: “Tip imobil” (e.g. house, apartment)
     condominium = Column(Text)               # Excel: “Comp.” (e.g. condo fee / building)
-    num_balconies = Column(Integer)          # Excel: “Nr. balcoane”
+    has_balconies = Column(Boolean, default=False)          # Excel: “Nr. balcoane”
 
-    structural_system = Column(Text)         # Excel: “Structura rezistenta”
-    terraces = Column(Text)                  # Excel: “Terase” (e.g. presence/description)
+    has_terrace = Column(Boolean, default=False)                  # Excel: “Terase” (e.g. presence/description)
     comfort = Column(Text)                   # Excel: “Confort”
 
     # ─────────────────────────────────────────────────────────────
     # RELATIONSHIPS
     # ─────────────────────────────────────────────────────────────
-    location = relationship("LocationModel", backref="listings")
+    # location = relationship("LocationModel", backref="listings")

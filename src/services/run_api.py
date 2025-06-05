@@ -10,6 +10,8 @@ try:
         locationRouter,
         priceHistoryRouter,
         predictionRouter,
+        clientRouter,
+        authRouter,
     )
     from project_helpers.schemas import ErrorSchema
 
@@ -54,6 +56,8 @@ if __name__ == "__main__":
                 locationRouter,
                 priceHistoryRouter,
                 predictionRouter,
+                clientRouter,
+                authRouter,
             ],
             responses={
                 500: {"model": ErrorSchema},

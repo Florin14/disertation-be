@@ -14,7 +14,6 @@ class LoginResponse(BaseSchema):
     id: int
     name: str
     role: PlatformRoles
-    isDeleted: bool
     hasDefaultPassword: bool
     isAvailable: bool
     companyName: Optional[str] = None

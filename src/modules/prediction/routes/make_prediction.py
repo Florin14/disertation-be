@@ -43,7 +43,7 @@ async def make_prediction(
     """
 
     # 2) Pregătim input-ul la fel cum am făcut la antrenament
-    print(payload)
+
     try:
         df_input = prepare_input_for_prediction(payload.dict())
     except Exception as e:
@@ -64,13 +64,13 @@ async def make_prediction(
         raise HTTPException(status_code=500, detail=f"Valoare invalidă primită de la model: {e}")
 
     # 5) Salvăm în baze de date
-    try:
-        db_entry = create_prediction(db, payload, predicted_price)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Eroare la salvarea predicției: {e}")
+    # try:
+    #     db_entry = create_prediction(db, payload, predicted_price)
+    # except Exception as e:
+    #     raise HTTPException(status_code=500, detail=f"Eroare la salvarea predicției: {e}")
 
     # 6) Returnăm obiectul salvat
-    return db_entry
+    return PredictionResponse(predicted_price=predicted_price)
 
 # @router.get(
 #     "/{prediction_id}",

@@ -20,9 +20,9 @@ class MailConfig(ConnectionConfig):
     MAIL_PORT: int = 587
     MAIL_STARTTLS: bool = True
     MAIL_SSL_TLS: bool = False
-    MAIL_DEV_RECIPIENT: str = Field("c.icadacws@gmail.com", env="MAIL_DEV_RECIPIENT")
-    MAIL_DEV_CC: str = Field("c.i.cadacws@gmail.com", env="MAIL_DEV_RECIPIENT")
-    MAIL_DEV_BCC: str = Field("c.i.c.adacws@gmail.com", env="MAIL_DEV_RECIPIENT")
+    MAIL_DEV_RECIPIENT: str = Field("zimbru.florin.4@gmail.com", env="MAIL_DEV_RECIPIENT")
+    MAIL_DEV_CC: str = Field("zimbru.florin.4@gmail.com", env="MAIL_DEV_RECIPIENT")
+    MAIL_DEV_BCC: str = Field("zimbru.florin.4@gmail.com", env="MAIL_DEV_RECIPIENT")
 
 
 env = Environment(
@@ -53,21 +53,6 @@ def send_html_email(
     sEmail, sPassword = sender or (config.MAIL_FROM, config.MAIL_PASSWORD)
 
     openServer = smtplib.SMTP
-
-    if (
-        PlatformEnvs.LOCAL.match()
-        or PlatformEnvs.DEVELOPMENT.match()
-        or PlatformEnvs.STAGING.match()
-        or PlatformEnvs.PREPRODUCTION.match()
-        or PlatformEnvs.TESTING.match()
-    ):
-        openServer = smtplib.SMTP_SSL
-        subject = subject + f" (TO: {recipients}, CC: {cc}, BCC: {bcc})"
-        recipients = [config.MAIL_DEV_RECIPIENT]
-        if cc:
-            cc = [config.MAIL_DEV_CC]
-        if bcc:
-            bcc = [config.MAIL_DEV_BCC]
 
     message = MIMEMultipart("alternative")
     message["Subject"] = subject

@@ -1,7 +1,9 @@
-from .config import LoadConfig
-from pydantic import ValidationError
-from typing import Callable, List
 from datetime import timedelta
+from typing import Callable, List
+
+from pydantic import ValidationError
+
+from .config import LoadConfig
 
 
 class AuthConfig:
@@ -22,8 +24,8 @@ class AuthConfig:
     _header_name = "Authorization"
     _header_type = "Bearer"
     _token_in_denylist_callback = None
-    _access_token_expires = timedelta(minutes=15)
-    _refresh_token_expires = timedelta(days=30)
+    _access_token_expires = timedelta(seconds=7200)
+    _refresh_token_expires = timedelta(seconds=84600)
 
     # option for create cookies
     _access_cookie_key = "access_token_cookie"
