@@ -21,7 +21,7 @@ from ..models import PredictionAdd, GridResultResponse
 MODEL_DIR = os.path.join(os.path.dirname(__file__), "..", "models_saved")
 os.makedirs(MODEL_DIR, exist_ok=True)
 
-MODEL_PATH_RF = os.path.join(MODEL_DIR, "price_model_rf.joblib")
+MODEL_PATH_RF = os.path.join(MODEL_DIR, "price_model_rf3.joblib")
 MODEL_PATH_GB = os.path.join(MODEL_DIR, "price_model_gb.joblib")
 
 
@@ -55,8 +55,6 @@ async def add_prediction2(data: PredictionAdd, db: Session = Depends(get_db)):
     #    * built/useful, yard/useful, terrace/useful, balcony/useful
     df["ratio_built_useful"] = df["built_area"].fillna(0) / df["useful_area"]
     df["ratio_yard_useful"] = df["yard_area"].fillna(0) / df["useful_area"]
-    df["ratio_terrace_useful"] = df["terrace_area"].fillna(0) / df["useful_area"]
-    df["ratio_balcony_useful"] = df["balcony_area"].fillna(0) / df["useful_area"]
 
     # 5) Separăm ținta (y) de features (X)
     y = df["price_per_sqm"].values
@@ -67,27 +65,23 @@ async def add_prediction2(data: PredictionAdd, db: Session = Depends(get_db)):
         "useful_area",
         "built_area",
         "yard_area",
-        "terrace_area",
-        "balcony_area",
         "num_rooms",
         "num_bathrooms",
-        "num_garages",
+        "has_garage",
         "floor",
-        "street_frontage",
         # + rapoartele create mai sus:
-        "ratio_built_useful",
-        "ratio_yard_useful",
-        "ratio_terrace_useful",
-        "ratio_balcony_useful",
+        # "ratio_built_useful",
+        # "ratio_yard_useful",
+        # "ratio_terrace_useful",
+        # "ratio_balcony_useful",
     ]
     categorical_features = [
         "classification",
         "land_classification",
         "city",
-        # poți include și „condominium”, „structural_system”, „terraces”, „comfort” dacă au sens
+        # poți include și „condominium” „has_terrace”, „comfort” dacă au sens
         "condominium",
-        "structural_system",
-        "terraces",
+        "has_terrace",
         "comfort",
     ]
 

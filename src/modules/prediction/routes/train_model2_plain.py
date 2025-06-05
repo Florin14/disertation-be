@@ -3,101 +3,86 @@ from datetime import datetime
 
 import joblib
 import numpy as np
-from fastapi import Depends, HTTPException
+from fastapi import HTTPException
 from sklearn.compose import ColumnTransformer
-from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
+from sklearn.ensemble import RandomForestRegressor
 from sklearn.impute import SimpleImputer
 from sklearn.metrics import mean_absolute_error, mean_squared_error
-from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.model_selection import train_test_split, RandomizedSearchCV
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder
-from sqlalchemy.orm import Session
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
-from extensions import get_db
 from modules.prediction.routes.helpers import load_listings_as_dataframe
-from project_helpers.responses import ConfirmationResponse
-# from .router import router
-# from ..models import PredictionAdd, GridResultResponse
 
 MODEL_DIR = os.path.join(os.path.dirname(__file__), "..", "models_saved")
 os.makedirs(MODEL_DIR, exist_ok=True)
 
 MODEL_PATH_RF = os.path.join(MODEL_DIR, "price_model_rf.joblib")
-MODEL_PATH_GB = os.path.join(MODEL_DIR, "price_model_gb.joblib")
+# MODEL_PATH_GB = os.path.join(MODEL_DIR, "price_model_gb.joblib")
 
-
-# @router.post("-v2", response_model=ConfirmationResponse)
-# async def add_prediction2(data: PredictionAdd, db: Session = Depends(get_db)):
-"""
-1) Calculăm ținta price_per_sqm = price / useful_area.
-2) Construim noi caracteristici (ratios etc.).
-3) Definim pipeline + GridSearchCV pentru RF și GB.
-4) Antrenăm, evaluăm, salvăm modelele optime.
-"""
 test_size: float = 0.2
 random_state: int = 42
+
 print("starttime:")
 print(datetime.now())
+
 # 1) Încărcăm datele
 try:
     df = load_listings_as_dataframe()
 except Exception as e:
     raise HTTPException(status_code=500, detail=f"Eroare la load_listings_as_dataframe: {e}")
 
-# 2) Dropping rows where price sau useful_area lipsesc / utile_area <= 0
+# 2) Filtrăm datele
 df = df.dropna(subset=["price", "useful_area"])
 df = df[df["useful_area"] > 0]
 if df.shape[0] < 50:
     raise HTTPException(status_code=400, detail="Nu există suficiente date pentru antrenament după filtrare.")
 
-# 3) Calculăm noua țintă: price_per_sqm
+# 3) Calculăm ținta
 df["price_per_sqm"] = df["price"] / df["useful_area"]
 
-# 4) Generăm FEATURE‐URI suplimentare (raporturi între suprafețe):
-#    * built/useful, yard/useful, terrace/useful, balcony/useful
-df["ratio_built_useful"] = df["built_area"].fillna(0) / df["useful_area"]
-df["ratio_yard_useful"] = df["yard_area"].fillna(0) / df["useful_area"]
-df["ratio_terrace_useful"] = df["terrace_area"].fillna(0) / df["useful_area"]
-df["ratio_balcony_useful"] = df["balcony_area"].fillna(0) / df["useful_area"]
+# 4) (Opțional) Generăm feature-uri suplimentare, dacă ai suprafață pentru terasă/balcon:
+# df["ratio_built_useful"]   = df["built_area"].fillna(0) / df["useful_area"]
+# df["ratio_yard_useful"]    = df["yard_area"].fillna(0)  / df["useful_area"]
 
-# 5) Separăm ținta (y) de features (X)
+# 5) Separăm X și y
 y = df["price_per_sqm"].values
 X = df.drop(columns=["price", "price_per_sqm"])
 
-# 6) Definim lista de coloane numerice și categorice
+# 6) Listele de coloane
 numeric_features = [
     "useful_area",
     "built_area",
     "yard_area",
-    "terrace_area",
-    "balcony_area",
     "num_rooms",
     "num_bathrooms",
-    "num_garages",
+    "has_garage",
     "floor",
-    "street_frontage",
-    # + rapoartele create mai sus:
-    "ratio_built_useful",
-    "ratio_yard_useful",
-    "ratio_terrace_useful",
-    "ratio_balcony_useful",
+    "built_year",
+    # Dacă ai rapoarte calculate, le adaugi aici, altfel le comentezi:
+    # "ratio_built_useful",
+    # "ratio_yard_useful",
 ]
 categorical_features = [
     "classification",
     "land_classification",
     "city",
-    # poți include și „condominium”, „structural_system”, „terraces”, „comfort” dacă au sens
     "condominium",
-    "structural_system",
-    "terraces",
+    "num_kitchens",
+    "has_parking_space",
+    "has_terrace",
+    "has_balconies",
     "comfort",
+    "property_type",
+    "structure",
+    "for_sale",
 ]
 
-# 7) Construim TRANSFORMER‐ul
+# 7) Preprocessor
 numeric_transformer = Pipeline(
     steps=[
         ("imputer", SimpleImputer(strategy="constant", fill_value=0)),
-        # poți adăuga StandardScaler() după imputare
+        ("scaler", StandardScaler()),
     ]
 )
 categorical_transformer = Pipeline(
@@ -111,15 +96,12 @@ preprocessor = ColumnTransformer(
         ("num", numeric_transformer, numeric_features),
         ("cat", categorical_transformer, categorical_features),
     ],
-    remainder="drop"  # abandonează restul coloanelor (inclusiv id, external_id, url etc.)
+    remainder="drop"
 )
 
-# 8) Construim doi regiștri: RF și GB (fără hiperparametri fixați)
+# 8) Pipeline RF
 model_rf = RandomForestRegressor(random_state=random_state)
-clf_rf = Pipeline(steps=[("preprocessor", preprocessor), ("regressor", model_rf)])
-
-# model_gb = GradientBoostingRegressor(random_state=random_state)
-# clf_gb = Pipeline(steps=[("preprocessor", preprocessor), ("regressor", model_gb)])
+clf_rf = Pipeline([("preprocessor", preprocessor), ("regressor", model_rf)])
 
 # 9) Împărțim în train/test
 X_train, X_test, y_train, y_test = train_test_split(
@@ -127,83 +109,97 @@ X_train, X_test, y_train, y_test = train_test_split(
 )
 
 # ────────────────────────────────────────────────────────────
-# 10) GRID SEARCH pentru RandomForestRegressor
+# 10) RANDOMIZED SEARCH pentru RandomForestRegressor
 # ────────────────────────────────────────────────────────────
-param_grid_rf = {
-    "regressor__n_estimators": [50, 100, 200],
+from scipy.stats import randint, uniform
+
+param_dist_rf = {
+    # Testăm un set restrâns de estimatori și adâncimi
+    "regressor__n_estimators": randint(50, 300),        # între 50 și 300
     "regressor__max_depth": [None, 10, 20, 30],
-    "regressor__min_samples_split": [2, 5, 10],
-    "regressor__min_samples_leaf": [1, 2, 4],
-    "regressor__max_features": ["sqrt", "log2"],
+    "regressor__min_samples_split": randint(2, 10),     # 2–10
+    "regressor__min_samples_leaf": randint(1, 5),       # 1–4
+    "regressor__max_features": ["sqrt", "log2", 0.5],
 }
-grid_rf = GridSearchCV(
+
+random_search_rf = RandomizedSearchCV(
     estimator=clf_rf,
-    param_grid=param_grid_rf,
-    cv=5,
+    param_distributions=param_dist_rf,
+    n_iter=30,                    # testăm 30 de combinații aleatorii
+    cv=3,                         # folosim 3-fold CV în loc de 5
     scoring="neg_mean_absolute_error",
     n_jobs=-1,
-    verbose=1,
+    random_state=random_state,
+    verbose=2
 )
-grid_rf.fit(X_train, y_train)
+random_search_rf.fit(X_train, y_train)
 
-best_rf: Pipeline = grid_rf.best_estimator_
-best_params_rf = grid_rf.best_params_
+best_rf: Pipeline = random_search_rf.best_estimator_
+best_params_rf = random_search_rf.best_params_
+
+# Evaluare pe setul de test
 y_pred_rf = best_rf.predict(X_test)
-mae_rf = mean_absolute_error(y_test, y_pred_rf)
+mae_rf  = mean_absolute_error(y_test, y_pred_rf)
 rmse_rf = np.sqrt(mean_squared_error(y_test, y_pred_rf))
+
 print(f"[RF – BEST] Params: {best_params_rf}")
 print(f"[RF – BEST] MAE(ppsm) = {mae_rf:.2f}, RMSE(ppsm) = {rmse_rf:.2f}")
+
+# Afișăm câteva feature importances rapide:
+num_cols = numeric_features
+cat_cols = best_rf.named_steps["preprocessor"] \
+    .named_transformers_["cat"] \
+    .named_steps["onehot"] \
+    .get_feature_names_out(categorical_features)
+all_feats = np.concatenate([num_cols, cat_cols])
+
+importances = best_rf.named_steps["regressor"].feature_importances_
+indices     = np.argsort(importances)[::-1]
+
+print("Top 10 feature importances:")
+for idx in indices[:10]:
+    print(f"  {all_feats[idx]}: {importances[idx]:.4f}")
+
 print("endtime:")
 print(datetime.now())
 
-# 11) GRID SEARCH pentru GradientBoostingRegressor
-param_grid_gb = {
-    "regressor__n_estimators": [50, 100, 200],
-    "regressor__learning_rate": [0.01, 0.1, 0.2],
-    "regressor__max_depth": [3, 5, 7],
-    "regressor__min_samples_split": [2, 5],
-    "regressor__min_samples_leaf": [1, 2],
-    "regressor__subsample": [0.7, 0.8, 1.0],
-}
-# grid_gb = GridSearchCV(
+# 11) (Opțional) RANDOMIZED SEARCH pentru GradientBoostingRegressor
+# ────────────────────────────────────────────────────────────
+# from sklearn.ensemble import GradientBoostingRegressor
+# param_dist_gb = {
+#     "regressor__n_estimators": randint(50, 200),
+#     "regressor__learning_rate": uniform(0.01, 0.19),  # 0.01–0.20
+#     "regressor__max_depth": [3, 5, 7],
+#     "regressor__min_samples_split": randint(2, 6),
+#     "regressor__min_samples_leaf": randint(1, 3),
+#     "regressor__subsample": [0.7, 0.8, 1.0],
+# }
+# model_gb = GradientBoostingRegressor(random_state=random_state)
+# clf_gb = Pipeline([("preprocessor", preprocessor), ("regressor", model_gb)])
+# random_search_gb = RandomizedSearchCV(
 #     estimator=clf_gb,
-#     param_grid=param_grid_gb,
-#     cv=5,
+#     param_distributions=param_dist_gb,
+#     n_iter=25,
+#     cv=3,
 #     scoring="neg_mean_absolute_error",
 #     n_jobs=-1,
-#     verbose=1,
+#     random_state=random_state,
+#     verbose=2
 # )
-# grid_gb.fit(X_train, y_train)
-
-# best_gb: Pipeline = grid_gb.best_estimator_
-# best_params_gb = grid_gb.best_params_
+# random_search_gb.fit(X_train, y_train)
+# best_gb = random_search_gb.best_estimator_
 # y_pred_gb = best_gb.predict(X_test)
-# mae_gb = mean_absolute_error(y_test, y_pred_gb)
+# mae_gb  = mean_absolute_error(y_test, y_pred_gb)
 # rmse_gb = np.sqrt(mean_squared_error(y_test, y_pred_gb))
-# print(f"[GB – BEST] Params: {best_params_gb}")
 # print(f"[GB – BEST] MAE(ppsm) = {mae_gb:.2f}, RMSE(ppsm) = {rmse_gb:.2f}")
 
-# 12) Comparație și salvare a modelului câștigător
-#    Să zicem că alegem pe cel cu MAE(ppsm) mai mic:
-# if mae_rf <= mae_gb:
+# 12) Salvăm modelul câștigător
 winner = "RF"
 model_to_save = best_rf
 save_path = MODEL_PATH_RF
-# else:
-#     winner = "GB"
-#     model_to_save = best_gb
-#     save_path = MODEL_PATH_GB
 
 try:
     joblib.dump(model_to_save, save_path)
     print(f"[WINNER] Model {winner} salvat la: {save_path}")
 except Exception as e:
-    raise HTTPException(status_code=500, detail=f"Eroare la salvarea modelului câștigător: {e}")
-
-# return GridResultResponse(
-#     best_model=winner,
-#     rf_mae_ppsm=mae_rf,
-#     rf_rmse_ppsm=rmse_rf,
-#     # gb_mae_ppsm=mae_gb,
-#     # gb_rmse_ppsm=rmse_gb,
-# )
+    raise HTTPException(status_code=500, detail=f"Eroare la salvarea modelului: {e}")

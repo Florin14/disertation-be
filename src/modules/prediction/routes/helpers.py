@@ -1,5 +1,6 @@
 import pandas as pd
 from sqlalchemy import create_engine
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import sessionmaker
 
 from modules.prediction.models import PredictionAdd, PredictionsModel
@@ -60,3 +61,66 @@ def get_prediction(db, prediction_id: int) -> PredictionsModel:
     Întoarce PredictionsModel cu id = prediction_id sau None dacă nu există.
     """
     return db.query(PredictionsModel).filter(PredictionsModel.id == prediction_id).first()
+
+
+
+def load_listings_from_db():
+    """
+    Deschide o sesiune SQLAlchemy, citește toate listing-urile din tabela `listings`
+    și construiește un DataFrame pandas cu coloanele de interes și câteva feature-uri adiționale.
+    """
+    session = SessionLocal()
+    try:
+        # Preluăm toate rândurile din tabela listings
+        listings = session.query(ListingModel).all()
+
+        # Extragem datele sub forma de liste de dicționare
+        records = []
+        for item in listings:
+            # Fiecare `item` e o instanță ListingModel
+            # Extragem atributele necesare
+            rec = {
+                "useful_area_total": item.useful_area_total,
+                "useful_area": item.useful_area,
+                "yard_area": item.yard_area,
+                "built_area": item.built_area,
+                "land_area": item.land_area,
+                "built_year": item.built_year,
+                "num_kitchens": item.num_kitchens,
+                "num_rooms": item.num_rooms,
+                "num_bathrooms": item.num_bathrooms,
+                "floor": item.floor,
+                "has_parking_space": int(item.has_parking_space),
+                "has_garage": int(item.has_garage),
+                "has_balconies": int(item.has_balconies),
+                "has_terrace": int(item.has_terrace),
+                "for_sale": int(item.for_sale),
+                "classification": item.classification or "missing",
+                "land_classification": item.land_classification or "missing",
+                "city": item.city or "missing",
+                "structure": item.structure or "missing",
+                "property_type": item.property_type or "missing",
+                "condominium": item.condominium or "missing",
+                "comfort": item.comfort or "missing",
+                # Ca target, prețul total (puteai opta și pentru price_per_sqm)
+                "price": item.price
+            }
+            records.append(rec)
+
+        df = pd.DataFrame.from_records(records)
+
+        # Creăm feature-ul "age" (vechimea imobilului)
+        # Dacă built_year e None, atribuim un age mare (sau putem imputa mediană)
+        current_year = 2025
+        df["age"] = df["built_year"].apply(lambda x: (current_year - x) if x is not None else None)
+
+        # Recomandare: Debifează în funcție de ce-ți dorești: ștergi rândurile cu missing critice
+        # sau imputezi mai jos.
+        return df
+
+    except SQLAlchemyError as e:
+        print("Eroare la citirea din DB:", e)
+        return pd.DataFrame()  # întoarcem DataFrame gol în caz de eroare
+
+    finally:
+        session.close()

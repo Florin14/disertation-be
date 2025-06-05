@@ -1,7 +1,10 @@
 import logging
 
 from constants import CONFIRM_ACCOUNT_SUBJECT
-from extensions import send_html_email
+from extensions.mail.mail import send_html_email
+
+
+# from extensions import send_html_email
 
 
 def send_confirmation_email(target, token: str):

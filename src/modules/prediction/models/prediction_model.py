@@ -23,8 +23,7 @@ class PredictionsModel(BaseModel):
     classification = Column(Text, nullable=True)
     land_classification = Column(Text, nullable=True)
     city = Column(Text, nullable=True)
-    # Dacă ai folosit cantități numerice ca street_frontage, construit_area etc.:
-    street_frontage = Column(Float, nullable=True)
+
     built_area = Column(Float, nullable=True)
     # … alte câmpuri (la fel cum ai definit în ListingModel) …
 

@@ -58,8 +58,6 @@ df["price_per_sqm"] = df["price"] / df["useful_area"]
 # 3) Calculăm rapoartele noi (dacă există coloane)
 df["ratio_built_useful"] = df["built_area"].fillna(0) / df["useful_area"]
 df["ratio_yard_useful"] = df["yard_area"].fillna(0) / df["useful_area"]
-df["ratio_terrace_useful"] = df["terrace_area"].fillna(0) / df["useful_area"]
-df["ratio_balcony_useful"] = df["balcony_area"].fillna(0) / df["useful_area"]
 
 # 4) Separăm y (target) de X (features)
 y = df["price_per_sqm"].values
@@ -67,13 +65,13 @@ X = df.drop(columns=["price", "price_per_sqm"])
 
 # 5) Definim caracteristicile
 numeric_features = [
-    "useful_area", "built_area", "yard_area", "terrace_area", "balcony_area",
-    "num_rooms", "num_bathrooms", "num_garages", "floor", "street_frontage",
+    "useful_area", "built_area", "yard_area",
+    "num_rooms", "num_bathrooms", "has_garage", "floor",
     "ratio_built_useful", "ratio_yard_useful", "ratio_terrace_useful", "ratio_balcony_useful",
 ]
 categorical_features = [
     "classification", "land_classification", "city",
-    "condominium", "structural_system", "terraces", "comfort",
+    "condominium", "has_terrace", "comfort",
 ]
 
 # 6) Construim preprocesorul

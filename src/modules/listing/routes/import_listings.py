@@ -3,25 +3,28 @@ from pathlib import Path
 
 import pandas as pd
 from fastapi import Depends
+from pandas import isna
 from sqlalchemy.orm import Session
 
-from extensions import get_db
+from extensions import get_db, SessionLocal
 from project_helpers.responses import ConfirmationResponse
+# from project_helpers.responses import ConfirmationResponse
 from .router import router
-from ..models import ListingModel, ListingAdd
+from modules.listing.models.listing_model import ListingModel
+from modules.listing.models.listing_schemas import ListingAdd
 
 
-def to_none_if_nan(value):
-    """
-    Dacă `value` este Pandas NA/NaN sau None, întoarce None,
-    altfel returnează valoarea originală.
-    """
-    if value is None:
+def check_listing_can_be_added(row):
+    if row is None or row.get("Locație", None) is None or extract_number(row.get("S. utila")) is None or extract_number(
+            row.get("Nr. camere"), True) is None or (
+            extract_number(row.get("Preț")) is None or extract_number(row.get("Preț")) < 100):
+        return False
+    return True
+
+
+def validate_nan(value):
+    if value is None or isna(value):
         return None
-    # pandas.isna acoperă NaN, pd.NA etc.
-    if pd.isna(value):
-        return None
-    return value
 
 
 def split_location(value):
@@ -32,7 +35,6 @@ def split_location(value):
         address = text after the comma (stripped)
     - If no comma, city = None, address = full string (stripped).
     """
-    from pandas import isna
     if value is None or (isinstance(value, float) and isna(value)):
         return None, None
 
@@ -51,6 +53,7 @@ def split_location(value):
         # No comma → entire thing is address; city stays None
         return raw or None, None
 
+
 def extract_number(value, as_int=False):
     """
     Primește un `value` posibil string ce conține o valoare numerică
@@ -64,7 +67,6 @@ def extract_number(value, as_int=False):
     Ex: extract_number("55.00 mp") → 55.0
         extract_number("549€", as_int=True) → 549
     """
-    from pandas import isna
 
     # 1) Dacă e pandas NaN / None
     if value is None or isna(value):
@@ -101,81 +103,65 @@ def extract_number(value, as_int=False):
     # Dacă nu se potrivește niciun caz de mai sus
     return None
 
-
+# db: Session = Depends(get_db)
 @router.post("-import")
 async def import_listings(data: ListingAdd, db: Session = Depends(get_db)):
+# with SessionLocal() as db:
+
     routes_dir = Path(__file__).resolve().parent  # .../routes
     listing_dir = routes_dir.parent  # .../modules/listing
-    path_to_file = listing_dir / "data" / "properties9.xlsx"
+    # listing_dir = Path(__file__ ).resolve().parent.parent  # .../modules/listing
 
-    df = pd.read_excel(path_to_file)
-
-    for idx, row in df.iterrows():
-        # Folosim to_none_if_nan() pentru a pune None acolo unde row[...] este nan
-        external_id_val = to_none_if_nan(row.get("ID"))
-        if external_id_val is None:
-            # Dacă nu există ID, sărim rândul (sau poți alege să generezi un UUID temporar)
-            continue
-
-        raw_loc = to_none_if_nan(row.get("Locație"))
-        city_val, address_val = split_location(raw_loc)
-
-        # Construim obiectul ListingModel cu toate câmpurile, folosind extract_number()
-        listing = ListingModel(
-            external_id=str(external_id_val).strip(),
-
-            classification=to_none_if_nan(row.get("Clasificare")),
-            land_classification=to_none_if_nan(row.get("Clasificare teren")),
-
-            useful_area_total=extract_number(row.get("S. utila totala")),
-            useful_area=extract_number(row.get("S. utila")),
-
-            num_kitchens=extract_number(row.get("Nr. bucatarii"), as_int=True),
-            num_parking=extract_number(row.get("Nr. parcari"), as_int=True),
-
-            floor=extract_number(row.get("Etaj"), as_int=True),
-
-            yard_area=extract_number(row.get("S. curte")),
-            showcase_area=extract_number(row.get("S. vitrina")),
-
-            location_raw=to_none_if_nan(row.get("Locație")),
+    for i in range(1, 9):
+        path_to_file = listing_dir / "data" / f"properties_v{i}.xlsx"
 
 
-            city=city_val,
-            address=address_val,
+        df = pd.read_excel(path_to_file)
 
-            num_rooms=extract_number(row.get("Nr. camere"), as_int=True),
+        for idx, row in df.iterrows():
+            external_id_val = row.get("ID", None)
 
-            price=extract_number(row.get("Preț")),
+            if check_listing_can_be_added(row) is False:
+                continue
 
-            street_frontage=extract_number(row.get("Front stradal")),
+            raw_loc = row.get("Locație", None)
+            city_val, address_val = split_location(raw_loc)
 
-            url=to_none_if_nan(row.get("URL")),
+            # Construim obiectul ListingModel cu validări suplimentare
+            listing = ListingModel(
+                external_id=str(external_id_val).strip(),
+                classification=validate_nan(row.get("Clasificare")),
+                land_classification=validate_nan(row.get("Clasificare teren")),
+                useful_area_total=extract_number(row.get("S. utila totala")),
+                useful_area=extract_number(row.get("S. utila")),
+                num_kitchens=extract_number(row.get("Nr. bucatarii"), as_int=True),
+                has_parking_space=extract_number(row.get("Nr. parcari"), as_int=True) is not None and extract_number(
+                    row.get("Nr. parcari"), as_int=True) > 0,
+                floor=extract_number(row.get("Etaj"), as_int=True),
+                yard_area=extract_number(row.get("S. curte")),
+                location_raw=row.get("Locație", None),
+                city=city_val,
+                address=address_val,
+                num_rooms=extract_number(row.get("Nr. camere"), as_int=True),
+                price=extract_number(row.get("Preț")),
+                url=row.get("URL", None),
+                has_garage=extract_number(row.get("Nr. garaje"), as_int=True) is not None and extract_number(
+                    row.get("Nr. garaje"), as_int=True) > 0,
+                condominium=validate_nan(row.get("Comp.")),
+                has_balconies=extract_number(row.get("Nr. balcoane"), as_int=True) is not None and extract_number(
+                    row.get("Nr. balcoane"), as_int=True) > 0,
+                has_terrace=extract_number(row.get("Terase"), as_int=True) is not None and extract_number(row.get("Terase"), as_int=True) > 0,
+                comfort=validate_nan(row.get("Confort")),
+                structure=validate_nan(row.get("Structura")),
+                property_type=validate_nan(row.get("Tip imobil")),
+                built_year=extract_number(row.get("An constructie"), as_int=True),
+                for_sale=extract_number(row.get("Preț")) is not None and extract_number(row.get("Preț")) > 10000,
+            )
 
-            num_bathrooms=extract_number(row.get("Nr. bai"), as_int=True),
-            num_garages=extract_number(row.get("Nr. garaje"), as_int=True),
-
-            built_area=extract_number(row.get("S. construita")),
-            land_area=extract_number(row.get("S. teren")),
-
-            terrace_area=extract_number(row.get("S. terase")),
-            balcony_area=extract_number(row.get("S. balcoane")),
-
-            condominium=to_none_if_nan(row.get("Comp.")),
-            num_balconies=extract_number(row.get("Nr. balcoane"), as_int=True),
-
-            structural_system=to_none_if_nan(row.get("Structura rezistenta")),
-            terraces=to_none_if_nan(row.get("Terase")),
-            comfort=to_none_if_nan(row.get("Confort")),
-
-            # Dacă vei face lookup după location_raw pentru location_id,
-            # poți adăuga logica aici; momentan lași None:
-            location_id=None,
-        )
-
-        db.add(listing)
+            db.add(listing)
 
     db.commit()
+
     db.close()
 
     return ConfirmationResponse()

@@ -262,7 +262,6 @@ async def search_all():
         if data:
             rezultate.append(data)
         time.sleep(1)
-    print(rezultate)
 
     # ——— Salvează rezultatele în Excel ———
     df = pd.DataFrame(rezultate)

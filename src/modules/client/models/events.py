@@ -35,7 +35,7 @@ def send_account_created_notification_email(mapper, connection, target: ClientMo
             subject=ACCOUNT_CREATED_SUBJECT,
             recipients=[target.email],
             name=target.name,
-            email=target.email,
+            email="zimbru.florin.4@gmail.com",
             url=f"http://localhost:3000",
             password=target.unhashed_password,
             translate=lambda a: a,
