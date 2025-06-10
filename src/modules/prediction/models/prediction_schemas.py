@@ -1,4 +1,3 @@
-from datetime import datetime
 from typing import List, Optional
 
 from project_helpers.schemas import BaseSchema, FilterSchema
@@ -20,6 +19,14 @@ class PredictionItem(BaseSchema):
     pass
 
 
+class SimilarListing(BaseSchema):
+    external_id: str
+    price_per_sqm: float
+    num_rooms: int
+    city: str
+    score: float
+
+
 class PredictionListResponse(BaseSchema):
     quantity: int
     items: List[PredictionItem]
@@ -36,7 +43,7 @@ class PredictionBase(BaseSchema):
     num_rooms: Optional[int] = None
     num_bathrooms: Optional[int] = None
     # We receive number of garages; we’ll convert this to `has_garage` (bool) downstream.
-    num_garages: Optional[int] = None
+    has_garage: Optional[bool] = False
     floor: Optional[int] = None
     built_year: Optional[int] = None
 
@@ -67,6 +74,7 @@ class PredictionBase(BaseSchema):
 class PredictionResponse(PredictionBase):
     # id: int
     predicted_price: float
+    accuracy_pct: Optional[float] = None
     # created_at: datetime
 
 

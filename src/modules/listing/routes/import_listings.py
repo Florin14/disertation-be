@@ -2,16 +2,17 @@ import re
 from pathlib import Path
 
 import pandas as pd
-from fastapi import Depends
 from pandas import isna
-from sqlalchemy.orm import Session
 
-from extensions import get_db, SessionLocal
-from project_helpers.responses import ConfirmationResponse
-# from project_helpers.responses import ConfirmationResponse
-from .router import router
+from extensions import SessionLocal
 from modules.listing.models.listing_model import ListingModel
+from project_helpers.responses import ConfirmationResponse
+
+from project_helpers.responses import ConfirmationResponse
+from .router import router
 from modules.listing.models.listing_schemas import ListingAdd
+
+# from ...prediction.utils.get_property_location import geocode_address
 
 
 def check_listing_can_be_added(row):
@@ -103,65 +104,90 @@ def extract_number(value, as_int=False):
     # Dacă nu se potrivește niciun caz de mai sus
     return None
 
+
+
+from sqlalchemy.orm import Session
+from .router import router
+from fastapi import Depends
+from extensions import get_db
+
 # db: Session = Depends(get_db)
 @router.post("-import")
 async def import_listings(data: ListingAdd, db: Session = Depends(get_db)):
-# with SessionLocal() as db:
+# def import_listings():
+    # with SessionLocal() as db:
 
     routes_dir = Path(__file__).resolve().parent  # .../routes
     listing_dir = routes_dir.parent  # .../modules/listing
     # listing_dir = Path(__file__ ).resolve().parent.parent  # .../modules/listing
 
-    for i in range(1, 9):
-        path_to_file = listing_dir / "data" / f"properties_v{i}.xlsx"
+    path_to_file = listing_dir / "data" / f"properties1_good.xlsx"
 
+    df = pd.read_excel(path_to_file)
 
-        df = pd.read_excel(path_to_file)
+    for idx, row in df.iterrows():
+        external_id_val = row.get("ID", None)
 
-        for idx, row in df.iterrows():
-            external_id_val = row.get("ID", None)
+        if check_listing_can_be_added(row) is False:
+            continue
 
-            if check_listing_can_be_added(row) is False:
-                continue
+        raw_loc = row.get("Locație", None)
+        city_val, address_val = split_location(raw_loc)
+        # lat, lon = geocode_address(raw_loc)
+        # print(lat, lon, str(external_id_val).strip())
 
-            raw_loc = row.get("Locație", None)
-            city_val, address_val = split_location(raw_loc)
+        # if lat is None or lon is None:
+        #     # nu putem geocoda → sărim rândul
+        #     continue
 
-            # Construim obiectul ListingModel cu validări suplimentare
-            listing = ListingModel(
-                external_id=str(external_id_val).strip(),
-                classification=validate_nan(row.get("Clasificare")),
-                land_classification=validate_nan(row.get("Clasificare teren")),
-                useful_area_total=extract_number(row.get("S. utila totala")),
-                useful_area=extract_number(row.get("S. utila")),
-                num_kitchens=extract_number(row.get("Nr. bucatarii"), as_int=True),
-                has_parking_space=extract_number(row.get("Nr. parcari"), as_int=True) is not None and extract_number(
-                    row.get("Nr. parcari"), as_int=True) > 0,
-                floor=extract_number(row.get("Etaj"), as_int=True),
-                yard_area=extract_number(row.get("S. curte")),
-                location_raw=row.get("Locație", None),
-                city=city_val,
-                address=address_val,
-                num_rooms=extract_number(row.get("Nr. camere"), as_int=True),
-                price=extract_number(row.get("Preț")),
-                url=row.get("URL", None),
-                has_garage=extract_number(row.get("Nr. garaje"), as_int=True) is not None and extract_number(
-                    row.get("Nr. garaje"), as_int=True) > 0,
-                condominium=validate_nan(row.get("Comp.")),
-                has_balconies=extract_number(row.get("Nr. balcoane"), as_int=True) is not None and extract_number(
-                    row.get("Nr. balcoane"), as_int=True) > 0,
-                has_terrace=extract_number(row.get("Terase"), as_int=True) is not None and extract_number(row.get("Terase"), as_int=True) > 0,
-                comfort=validate_nan(row.get("Confort")),
-                structure=validate_nan(row.get("Structura")),
-                property_type=validate_nan(row.get("Tip imobil")),
-                built_year=extract_number(row.get("An constructie"), as_int=True),
-                for_sale=extract_number(row.get("Preț")) is not None and extract_number(row.get("Preț")) > 10000,
-            )
+        external_id = str(external_id_val).strip()
 
-            db.add(listing)
+        # Construim obiectul ListingModel cu validări suplimentare
+        listing = ListingModel(
+            external_id=external_id,
+            classification=validate_nan(row.get("Clasificare")),
+            land_classification=validate_nan(row.get("Clasificare teren")),
+            useful_area_total=extract_number(row.get("S. utila totala")),
+            useful_area=extract_number(row.get("S. utila")),
+            num_kitchens=extract_number(row.get("Nr. bucatarii"), as_int=True),
+            has_parking_space=extract_number(row.get("Nr. parcari"), as_int=True) is not None and extract_number(
+                row.get("Nr. parcari"), as_int=True) > 0,
+            floor=extract_number(row.get("Etaj"), as_int=True),
+            yard_area=extract_number(row.get("S. curte")),
+            location_raw=row.get("Locație", None),
+            city=city_val,
+            address=address_val,
+            latitude=None,
+            longitude=None,
+            num_rooms=extract_number(row.get("Nr. camere"), as_int=True),
+            price=extract_number(row.get("Preț")),
+            url=row.get("URL", None),
+            has_garage=extract_number(row.get("Nr. garaje"), as_int=True) is not None and extract_number(
+                row.get("Nr. garaje"), as_int=True) > 0,
+            condominium=validate_nan(row.get("Comp.")),
+            has_balconies=extract_number(row.get("Nr. balcoane"), as_int=True) is not None and extract_number(
+                row.get("Nr. balcoane"), as_int=True) > 0,
+            has_terrace=extract_number(row.get("Terase"), as_int=True) is not None and extract_number(
+                row.get("Terase"), as_int=True) > 0,
+            comfort=validate_nan(row.get("Confort")),
+            structure=validate_nan(row.get("Structura")),
+            property_type=validate_nan(row.get("Tip imobil")),
+            built_year=extract_number(row.get("An constructie"), as_int=True),
+            for_sale=extract_number(row.get("Preț")) is not None and extract_number(row.get("Preț")) > 10000,
+        )
+        # normalizare(valori intre 0 si 1)/standardizare,
+        # agregare petnru predictie petnru a lua primele 5 (distante normalizate), daca are sau nu garaj sa nu ajunga sa fie mai important(data embalance)
+        # pot sa ma focusez doar pe un model care sa fie antrenat bine - precizie undeva la > 80% este perfect
+        # sa nu mentionez de unde am luat datele -> pot sa mentionez ca de pe net !!!obligatoriu nu de pe site ul blitz
+        # sa incerc sa restrang la valori intre 0 si 1
+        # agregare petnru predictie petnru a lua primele 5 (distante normalizate), daca are sau nu garaj sa nu ajunga sa fie mai important(data embalance)
+        # se mai pot adauga informatii legate de distanta pana la centru, prima statie de autobus/troleu, pana la metrou, pana la parc, pana la scoli, pana la spital, etc.
+
+        db.add(listing)
 
     db.commit()
 
     db.close()
 
     return ConfirmationResponse()
+

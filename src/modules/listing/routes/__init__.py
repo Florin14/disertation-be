@@ -3,3 +3,4 @@ from .add_listing import *
 from .import_listings import *
 from .get_all_listings import *
 from .get_imobiliare_ro_data import *
+from .update_listings_lat_lon import *
