@@ -69,6 +69,10 @@ class PredictionBase(BaseSchema):
     # If you want to pass it explicitly, you can:
     for_sale: Optional[bool] = False
     has_parking_space: Optional[bool] = False
+    hospital_dist_km: Optional[float] = 0.0
+    subway_dist_km: Optional[float] = 0.0
+    bus_stop_dist_km: Optional[float] = 0.0
+    school_dist_km: Optional[float] = 0.0
 
 
 class PredictionResponse(PredictionBase):

@@ -9,11 +9,13 @@ from sqlalchemy.orm import Session
 
 from extensions import get_db
 from modules.prediction.models.prediction_schemas import PredictionBase, PredictionResponse
-from modules.prediction.routes.helpers import create_prediction
-from modules.prediction.routes.train_model1 import MODEL_PATH
+# from modules.prediction.routes.predictie_v2 import MODEL_PATH
 from .router import router
 from ..utils import prepare_input_for_prediction
 
+BASEDIR = os.path.dirname(__file__)
+MODEL_DIR = os.path.join(BASEDIR, "..", "models_saved")
+MODEL_PATH = os.path.join(MODEL_DIR, "price_model_best.joblib")
 # ───────────────────────────────────────────────────────────────────────────────
 # 1) Încărcăm modelul antrenat O SINGURĂ DATĂ la importul modulului predict.py
 # ───────────────────────────────────────────────────────────────────────────────
@@ -26,7 +28,7 @@ except Exception as e:
 
 
 @router.post(
-    "-predict",
+    "-predict-ridge",
     response_model=PredictionResponse,
     summary="Primește datele, face predictia și o salvează în DB"
 )
@@ -54,7 +56,7 @@ async def make_prediction(
         y_pred_array = model_pipeline.predict(df_input)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Eroare la execuția predict: {e}")
-
+    print(y_pred_array)
     # 4) Verificăm că primim măcar un element
     if not isinstance(y_pred_array, (list, np.ndarray)) or len(y_pred_array) == 0:
         raise HTTPException(status_code=500, detail="Modelul nu a returnat nicio valoare.")

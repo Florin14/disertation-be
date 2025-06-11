@@ -18,16 +18,12 @@ from modules.prediction.routes.helpers import load_listings_as_dataframe
 from .router import router
 from ..models import PredictionAdd, GridResultResponseTrain1
 
-MODEL_DIR = os.path.join(os.path.dirname(__file__), "..", "models_saved")
-os.makedirs(MODEL_DIR, exist_ok=True)
-MODEL_PATH = os.path.join(MODEL_DIR, "price_model.joblib")
-
 
 MODEL_DIR = os.path.join(os.path.dirname(__file__), "..", "models_saved")
 os.makedirs(MODEL_DIR, exist_ok=True)
 
 # Vom salva câte un fișier pentru fiecare model
-MODEL_PATH_RF = os.path.join(MODEL_DIR, "price_model_rf3.joblib")
+MODEL_PATH_RF = os.path.join(MODEL_DIR, "price_model_rf.joblib")
 MODEL_PATH_GB = os.path.join(MODEL_DIR, "price_model_gb.joblib")
 
 
