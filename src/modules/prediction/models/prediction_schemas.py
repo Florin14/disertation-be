@@ -25,6 +25,11 @@ class SimilarListing(BaseSchema):
     num_rooms: int
     city: str
     score: float
+    location_raw: str
+    useful_area: float
+    total_price: float
+    latitude: float
+    longitude: float
 
 
 class PredictionListResponse(BaseSchema):
@@ -35,6 +40,7 @@ class PredictionListResponse(BaseSchema):
 class PredictionBase(BaseSchema):
     # ─────────────────────────────────────────────────────────────────────────
     # NUMERIC features
+    user_id: Optional[int] = None
     useful_area: Optional[float] = None
     built_area: Optional[float] = None
     useful_area_total: Optional[float] = None
@@ -73,13 +79,19 @@ class PredictionBase(BaseSchema):
     subway_dist_km: Optional[float] = 0.0
     bus_stop_dist_km: Optional[float] = 0.0
     school_dist_km: Optional[float] = 0.0
+    ratio_balcony_useful: Optional[float] = 60.0
+    ratio_terrace_useful: Optional[float] = 60.0
+    ratio_yard_useful: Optional[float] = 60.0
+    ratio_built_useful: Optional[float] = 60.0
 
 
-class PredictionResponse(PredictionBase):
+class PredictionResponse(BaseSchema):
     # id: int
     predicted_price: float
+    location_raw: str
     accuracy_pct: Optional[float] = None
     # created_at: datetime
+    similar_listings: List[SimilarListing] = []
 
 
 class GridResultResponseTrain1(BaseSchema):

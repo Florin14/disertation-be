@@ -1,10 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Column, BigInteger, Integer, DateTime, Float, Text, Enum, ForeignKey, Boolean
-from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.orm import relationship
-
-from constants import ListingSource
+from sqlalchemy import Column, BigInteger, Integer, DateTime, Float, Text, Boolean
 from extensions import BaseModel
 
 

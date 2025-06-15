@@ -59,15 +59,11 @@
 #     )
 
 
-
-
 import os
+
 import joblib
-import numpy as np
-import pandas as pd
 from fastapi import Depends, HTTPException
 from sqlalchemy.orm import Session
-from scipy.spatial import cKDTree
 
 from extensions import get_db
 from modules.prediction.models.prediction_schemas import PredictionBase, PredictionResponse, SimilarListing
@@ -75,6 +71,8 @@ from modules.prediction.routes.helpers import load_listings_as_dataframe
 from .model_path import MODEL_PATH
 from .router import router
 from ..utils import prepare_input_for_prediction
+from ...listing.models.performance_schemas import HistoryCreate
+from ...listing.routes.helpers import create_history
 
 # ─── ÎNCARCĂ MODELUL ─────────────────────────────────────────────────────────
 if not os.path.isfile(MODEL_PATH):
@@ -83,12 +81,15 @@ model = joblib.load(MODEL_PATH)
 
 # ─── LOAD FULL LISTINGS FOR similarity ───────────────────────────────────────
 df_all = load_listings_as_dataframe()
+
+
 # compute price_per_sqm and POI distances for df_all (similar to training)
 # TODO: reuse same POI code as above in training
 
 @router.post("-predict", response_model=PredictionResponse)
 async def make_prediction(payload: PredictionBase, db: Session = Depends(get_db)):
     # 1) Prepare single‐row df_input
+    print(payload.dict())
     try:
         df_input = prepare_input_for_prediction(payload.dict())
     except Exception as e:
@@ -112,24 +113,45 @@ async def make_prediction(payload: PredictionBase, db: Session = Depends(get_db)
     candidates = df_all[
         (df_all["diff_price"] <= 10) &
         (df_all["diff_rooms"] <= 1)
-    ].copy()
+        ].copy()
     # sort by combined diff
     candidates["score"] = candidates["diff_price"] + candidates["diff_rooms"]
     top5 = candidates.nsmallest(5, "score")
 
-    similar = [
-        SimilarListing(
+    initialLocation = payload.city + " " + payload.address or ""
+    similar = []
+    for _, row in top5.iterrows():
+        similar.append(SimilarListing(
             external_id=row.external_id,
             price_per_sqm=row.price_per_sqm,
             num_rooms=row.num_rooms,
             city=row.city,
-            score=float(row.score)
+            score=float(row.score),
+            location_raw=row.location_raw,
+            useful_area=row.useful_area_total,
+            total_price=row.price,
+            latitude=row.latitude,
+            longitude=row.longitude,
+        ))
+
+        history = HistoryCreate(
+            base_location=initialLocation,
+            price_per_sqm=row.price_per_sqm,
+            predicted_price=y_pred * payload.useful_area,
+            location_raw=row.location_raw,
+            num_rooms=row.num_rooms,
+            city=row.city,
+            useful_area=row.useful_area,
+            total_price=row.price,
+            latitude=row.latitude,
+            longitude=row.longitude,
+            user_id=payload.user_id or None,
         )
-        for _, row in top5.iterrows()
-    ]
+        create_history(history)
 
     return PredictionResponse(
-        predicted_price=y_pred,
+        predicted_price=y_pred * payload.useful_area,
         accuracy_pct=accuracy,
-        similar_listings=similar
+        similar_listings=similar,
+        location_raw=payload.address,
     )

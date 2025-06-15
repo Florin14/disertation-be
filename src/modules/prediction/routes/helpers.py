@@ -119,7 +119,6 @@ def load_listings_from_db():
         return df
 
     except SQLAlchemyError as e:
-        print("Eroare la citirea din DB:", e)
         return pd.DataFrame()  # întoarcem DataFrame gol în caz de eroare
 
     finally:

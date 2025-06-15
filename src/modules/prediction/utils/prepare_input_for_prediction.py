@@ -11,7 +11,8 @@ def prepare_input_for_prediction(payload: dict) -> pd.DataFrame:
         "has_garage", "useful_area_total", "built_area", "built_year", "land_area", "yard_area",
         "has_terrace", "has_balconies", "floor", "structure", "for_sale", "property_type",
         "comfort", "condominium", "price", "land_classification", "street_frontage",
-        'hospital_dist_km', 'subway_dist_km', 'bus_stop_dist_km', 'school_dist_km'
+        'hospital_dist_km', 'subway_dist_km', 'bus_stop_dist_km', 'school_dist_km',
+        'ratio_balcony_useful', 'ratio_terrace_useful', 'ratio_yard_useful', 'ratio_built_useful'
     ]
 
     # Create a DataFrame from the payload
