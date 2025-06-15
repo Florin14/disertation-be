@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Column, BigInteger, Integer, DateTime, Float, Text
+from sqlalchemy import Column, BigInteger, Integer, DateTime, Float, Text, Boolean
 
 from extensions import BaseModel
 
@@ -15,7 +15,7 @@ class PredictionsModel(BaseModel):
     useful_area = Column(Float, nullable=True)
     num_rooms = Column(Integer, nullable=True)
     num_bathrooms = Column(Integer, nullable=True)
-    num_garages = Column(Integer, nullable=True)
+    has_garage = Column(Boolean, default=False)
     floor = Column(Integer, nullable=True)
     # … adaugă orice alte câmpuri relevante pe care
     #    le-ai folosit în antrenament (ex.: classification,

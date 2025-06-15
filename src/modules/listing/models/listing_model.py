@@ -1,10 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Column, BigInteger, Integer, DateTime, Float, Text, Enum, ForeignKey, Boolean
-from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.orm import relationship
-
-from constants import ListingSource
+from sqlalchemy import Column, BigInteger, Integer, DateTime, Float, Text, Boolean
 from extensions import BaseModel
 
 
@@ -15,7 +11,7 @@ class ListingModel(BaseModel):
     # Existing PK / timestamps / minimal FKs / unique identifiers
     # ─────────────────────────────────────────────────────────────
     id = Column(BigInteger, primary_key=True, index=True)
-    external_id = Column(Text, unique=True, index=True)     # maps to Excel “ID”
+    external_id = Column(Text, unique=True)     # maps to Excel “ID”
     # location_id = Column(Integer, ForeignKey("locations.id"))  # optional FK; kept for relational mapping
     inserted_at = Column(DateTime, default=lambda: datetime.now())
 
@@ -34,16 +30,18 @@ class ListingModel(BaseModel):
     floor = Column(Integer, default=0)                  # Excel: “Etaj”
 
     yard_area = Column(Float, default=0)                # Excel: “S. curte”
+    latitude = Column(Float, default=0, index=True)
+    longitude = Column(Float, default=0,  index=True)
 
     # Now split into two fields instead of `location_raw`:
-    location_raw = Column(Text, nullable=True)
+    location_raw = Column(Text, nullable=True, index=True)
     city = Column(Text, nullable=True)
     address = Column(Text, nullable=True)
     for_sale = Column(Boolean, default=False)  # Indicates if the listing is for sale or rent
 
     num_rooms = Column(Integer, default=0)              # Excel: “Nr. camere”
 
-    price = Column(Float, default=0)                    # Excel: “Preț”
+    price = Column(Float, default=0,  index=True)                    # Excel: “Preț”
 
     url = Column(Text)                       # Excel: “URL”
 
