@@ -20,7 +20,7 @@ from ..models import PredictionAdd, GridResultResponseTrain1
 
 MODEL_DIR = os.path.join(os.path.dirname(__file__), "..", "models_saved")
 os.makedirs(MODEL_DIR, exist_ok=True)
-MODEL_PATH = os.path.join(MODEL_DIR, "price_model.joblib")
+MODEL_PATH = os.path.join(MODEL_DIR, "price_model_rf_final.joblib")
 
 
 MODEL_DIR = os.path.join(os.path.dirname(__file__), "..", "models_saved")

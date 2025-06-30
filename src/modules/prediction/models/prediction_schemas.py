@@ -61,6 +61,7 @@ class PredictionBase(BaseSchema):
     # We’ll compute `for_sale` (bool) from a threshold on `predicted_price` or input price.
     # If you want to pass it explicitly, you can:
     for_sale: Optional[bool] = False
+    has_garage: Optional[bool] = False
     has_parking_space: Optional[bool] = False
 
 

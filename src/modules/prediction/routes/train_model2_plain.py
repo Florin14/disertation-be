@@ -17,7 +17,7 @@ from modules.prediction.routes.helpers import load_listings_as_dataframe
 MODEL_DIR = os.path.join(os.path.dirname(__file__), "..", "models_saved")
 os.makedirs(MODEL_DIR, exist_ok=True)
 
-MODEL_PATH_RF = os.path.join(MODEL_DIR, "price_model_rf.joblib")
+MODEL_PATH_RF = os.path.join(MODEL_DIR, "price_model_rf_final.joblib")
 # MODEL_PATH_GB = os.path.join(MODEL_DIR, "price_model_gb.joblib")
 
 test_size: float = 0.2
@@ -65,7 +65,7 @@ numeric_features = [
 ]
 categorical_features = [
     "classification",
-    "land_classification",
+    # "land_classification",
     "city",
     "condominium",
     "num_kitchens",
@@ -162,36 +162,6 @@ for idx in indices[:10]:
 
 print("endtime:")
 print(datetime.now())
-
-# 11) (Opțional) RANDOMIZED SEARCH pentru GradientBoostingRegressor
-# ────────────────────────────────────────────────────────────
-# from sklearn.ensemble import GradientBoostingRegressor
-# param_dist_gb = {
-#     "regressor__n_estimators": randint(50, 200),
-#     "regressor__learning_rate": uniform(0.01, 0.19),  # 0.01–0.20
-#     "regressor__max_depth": [3, 5, 7],
-#     "regressor__min_samples_split": randint(2, 6),
-#     "regressor__min_samples_leaf": randint(1, 3),
-#     "regressor__subsample": [0.7, 0.8, 1.0],
-# }
-# model_gb = GradientBoostingRegressor(random_state=random_state)
-# clf_gb = Pipeline([("preprocessor", preprocessor), ("regressor", model_gb)])
-# random_search_gb = RandomizedSearchCV(
-#     estimator=clf_gb,
-#     param_distributions=param_dist_gb,
-#     n_iter=25,
-#     cv=3,
-#     scoring="neg_mean_absolute_error",
-#     n_jobs=-1,
-#     random_state=random_state,
-#     verbose=2
-# )
-# random_search_gb.fit(X_train, y_train)
-# best_gb = random_search_gb.best_estimator_
-# y_pred_gb = best_gb.predict(X_test)
-# mae_gb  = mean_absolute_error(y_test, y_pred_gb)
-# rmse_gb = np.sqrt(mean_squared_error(y_test, y_pred_gb))
-# print(f"[GB – BEST] MAE(ppsm) = {mae_gb:.2f}, RMSE(ppsm) = {rmse_gb:.2f}")
 
 # 12) Salvăm modelul câștigător
 winner = "RF"
